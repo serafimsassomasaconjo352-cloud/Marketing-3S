@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">RUMO 3S CFO</string>
+    <string name="brand_company">RUMO 3S IA</string>
+    <string name="brand_subtitle">Direção Financeira &amp; Estratégia Empresarial • Angola (Kz)</string>
+    <string name="auth_title">RUMO 3S CFO</string>
+    <string name="auth_headline">Controlo financeiro estratégico em Kwanzas para a RUMO 3S IA</string>
+    <string name="auth_description">Planeamento mensal e anual, fluxo de caixa separado do património pessoal, análise de ROI 80/20 e consultoria CFO com IA.</string>
+    <string name="auth_sign_in_google">Entrar com Google</string>
+    <string name="auth_signing_in">A autenticar...</string>
+    <string name="nav_dashboard">Painel</string>
+    <string name="nav_cashflow">Caixa</string>
+    <string name="nav_investments">Estratégia</string>
+    <string name="nav_advisor">CFO IA</string>
+    <string name="currency_kz">Kz</string>
+    <string name="sign_out">Terminar sessão</string>
+</resources>

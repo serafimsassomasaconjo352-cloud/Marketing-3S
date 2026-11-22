@@ -1,0 +1,6 @@
+{
+  "name": "RUMO 3S CFO",
+  "description": "Gestor Financeiro e Estrategista Empresarial (CFO) para a empresa RUMO 3S IA em Angola, com controlo em Kwanzas (Kz), indicadores, fluxo de caixa, investimentos e consultoria estratégica com IA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

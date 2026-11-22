@@ -1,0 +1,160 @@
+{
+  "entities": {
+    "FinancialPlan": {
+      "title": "FinancialPlan",
+      "description": "Company financial targets, monthly/annual budget, opening capital, and emergency reserve settings in Kwanzas (Kz) for RUMO 3S IA.",
+      "type": "object",
+      "properties": {
+        "companyName": { "type": "string", "description": "Business name (RUMO 3S IA)" },
+        "monthlyRevenueGoalKz": { "type": "number", "description": "Monthly revenue target in Kz" },
+        "monthlyExpenseBudgetKz": { "type": "number", "description": "Monthly operational expense ceiling in Kz" },
+        "annualRevenueGoalKz": { "type": "number", "description": "Annual revenue target in Kz" },
+        "emergencyReserveTargetKz": { "type": "number", "description": "Emergency reserve target in Kz" },
+        "emergencyReserveBalanceKz": { "type": "number", "description": "Current emergency reserve balance in Kz" },
+        "openingCapitalKz": { "type": "number", "description": "Initial business capital available in Kz" },
+        "notes": { "type": "string", "description": "Optional financial planning notes" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": [
+        "companyName",
+        "monthlyRevenueGoalKz",
+        "monthlyExpenseBudgetKz",
+        "annualRevenueGoalKz",
+        "emergencyReserveTargetKz",
+        "emergencyReserveBalanceKz",
+        "openingCapitalKz",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "FinancialTransaction": {
+      "title": "FinancialTransaction",
+      "description": "Cashflow entry or exit in Kwanzas (Kz), distinguishing business operations, debts, reserves, and personal withdrawals.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Short transaction title" },
+        "amountKz": { "type": "number", "description": "Amount in Kwanzas (Kz)" },
+        "type": {
+          "type": "string",
+          "enum": [
+            "REVENUE",
+            "DIRECT_COST",
+            "OPERATIONAL_EXPENSE",
+            "DEBT_PAYMENT",
+            "RESERVE_CONTRIBUTION",
+            "PERSONAL_WITHDRAWAL"
+          ],
+          "description": "Financial classification"
+        },
+        "category": { "type": "string", "description": "Business category" },
+        "notes": { "type": "string", "description": "Justification or details" },
+        "transactionDateMillis": { "type": "number", "description": "Epoch milliseconds of transaction date" },
+        "recurring": { "type": "boolean", "description": "Whether this is a recurring revenue or expense" },
+        "settled": { "type": "boolean", "description": "Whether paid/received (false = pending debt or receivable)" },
+        "wastefulFlag": { "type": "boolean", "description": "Flagged as avoidable or wasteful spending" },
+        "personalSeparated": { "type": "boolean", "description": "True when strictly business; false if personal withdrawal alert applies" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": [
+        "title",
+        "amountKz",
+        "type",
+        "category",
+        "transactionDateMillis",
+        "recurring",
+        "settled",
+        "wastefulFlag",
+        "personalSeparated",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "InvestmentItem": {
+      "title": "InvestmentItem",
+      "description": "Strategic investment opportunity or growth initiative evaluated by ROI, risk, sustainability, and 80/20 Pareto rule.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Investment initiative title" },
+        "capitalKz": { "type": "number", "description": "Capital required or invested in Kz" },
+        "expectedReturnKz": { "type": "number", "description": "Projected return in Kz" },
+        "actualReturnKz": { "type": "number", "description": "Realized return in Kz" },
+        "riskLevel": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
+        "focusType": {
+          "type": "string",
+          "enum": ["RECURRING_REVENUE", "MARGIN_OPTIMIZATION", "PARETO_80_20", "INFRASTRUCTURE"]
+        },
+        "status": { "type": "string", "enum": ["PROPOSED", "ACTIVE", "COMPLETED", "DISCARDED"] },
+        "pareto8020": { "type": "boolean", "description": "High-leverage 20% initiative producing 80% results" },
+        "justification": { "type": "string", "description": "Strategic justification and CFO analysis" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": [
+        "title",
+        "capitalKz",
+        "expectedReturnKz",
+        "actualReturnKz",
+        "riskLevel",
+        "focusType",
+        "status",
+        "pareto8020",
+        "justification",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PeriodReport": {
+      "title": "PeriodReport",
+      "description": "Saved periodic CFO executive financial report in Kz with problems, opportunities, and next-period action plan.",
+      "type": "object",
+      "properties": {
+        "periodType": { "type": "string", "enum": ["DAILY", "WEEKLY", "MONTHLY", "ANNUAL"] },
+        "periodLabel": { "type": "string", "description": "Human-readable period label" },
+        "totalRevenueKz": { "type": "number" },
+        "totalExpenseKz": { "type": "number" },
+        "netProfitKz": { "type": "number" },
+        "summary": { "type": "string" },
+        "problemsIdentified": { "type": "array" },
+        "opportunities": { "type": "array" },
+        "actionPlan": { "type": "array" },
+        "generatedByAi": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "periodType",
+        "periodLabel",
+        "totalRevenueKz",
+        "totalExpenseKz",
+        "netProfitKz",
+        "summary",
+        "problemsIdentified",
+        "opportunities",
+        "actionPlan",
+        "generatedByAi",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/FinancialPlan" },
+      "description": "User-scoped financial plan and company targets document"
+    },
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/FinancialTransaction" },
+      "description": "User-scoped cashflow transactions in Kwanzas (Kz)"
+    },
+    "/users/{userId}/investments/{investmentId}": {
+      "schema": { "$ref": "#/entities/InvestmentItem" },
+      "description": "User-scoped investment opportunities and growth initiatives"
+    },
+    "/users/{userId}/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/PeriodReport" },
+      "description": "User-scoped executive period financial reports"
+    }
+  }
+}

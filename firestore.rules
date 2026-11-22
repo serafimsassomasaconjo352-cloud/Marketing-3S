@@ -1,0 +1,202 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isNonNegKz(val) {
+      return val is number && val >= 0 && val <= 1000000000000;
+    }
+
+    function isPosKz(val) {
+      return val is number && val > 0 && val <= 1000000000000;
+    }
+
+    function isValidFinancialPlan(data) {
+      return data.companyName is string && data.companyName.size() >= 1 && data.companyName.size() <= 100 &&
+             isNonNegKz(data.monthlyRevenueGoalKz) &&
+             isNonNegKz(data.monthlyExpenseBudgetKz) &&
+             isNonNegKz(data.annualRevenueGoalKz) &&
+             isNonNegKz(data.emergencyReserveTargetKz) &&
+             isNonNegKz(data.emergencyReserveBalanceKz) &&
+             isNonNegKz(data.openingCapitalKz) &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 500)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidTransaction(data) {
+      return data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             isPosKz(data.amountKz) &&
+             data.type in ['REVENUE', 'DIRECT_COST', 'OPERATIONAL_EXPENSE', 'DEBT_PAYMENT', 'RESERVE_CONTRIBUTION', 'PERSONAL_WITHDRAWAL'] &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 400)) &&
+             data.transactionDateMillis is number && data.transactionDateMillis > 0 &&
+             data.recurring is bool &&
+             data.settled is bool &&
+             data.wastefulFlag is bool &&
+             data.personalSeparated is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidInvestment(data) {
+      return data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             isPosKz(data.capitalKz) &&
+             isNonNegKz(data.expectedReturnKz) &&
+             isNonNegKz(data.actualReturnKz) &&
+             data.riskLevel in ['LOW', 'MEDIUM', 'HIGH'] &&
+             data.focusType in ['RECURRING_REVENUE', 'MARGIN_OPTIMIZATION', 'PARETO_80_20', 'INFRASTRUCTURE'] &&
+             data.status in ['PROPOSED', 'ACTIVE', 'COMPLETED', 'DISCARDED'] &&
+             data.pareto8020 is bool &&
+             data.justification is string && data.justification.size() <= 600 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidStringList(arr) {
+      return arr is list && arr.size() <= 10 && (arr.size() == 0 || arr[0] is string);
+    }
+
+    function isValidPeriodReport(data) {
+      return data.periodType in ['DAILY', 'WEEKLY', 'MONTHLY', 'ANNUAL'] &&
+             data.periodLabel is string && data.periodLabel.size() >= 1 && data.periodLabel.size() <= 80 &&
+             isNonNegKz(data.totalRevenueKz) &&
+             isNonNegKz(data.totalExpenseKz) &&
+             data.netProfitKz is number && data.netProfitKz >= -1000000000000 && data.netProfitKz <= 1000000000000 &&
+             data.summary is string && data.summary.size() >= 1 && data.summary.size() <= 2500 &&
+             isValidStringList(data.problemsIdentified) &&
+             isValidStringList(data.opportunities) &&
+             isValidStringList(data.actionPlan) &&
+             data.generatedByAi is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId}/settings/{settingId} {
+      allow get: if isOwner(userId) && isValidId(settingId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(settingId) &&
+                       settingId == 'financial_plan' &&
+                       incoming().keys().hasAll([
+                         'companyName', 'monthlyRevenueGoalKz', 'monthlyExpenseBudgetKz',
+                         'annualRevenueGoalKz', 'emergencyReserveTargetKz', 'emergencyReserveBalanceKz',
+                         'openingCapitalKz', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'companyName', 'monthlyRevenueGoalKz', 'monthlyExpenseBudgetKz',
+                         'annualRevenueGoalKz', 'emergencyReserveTargetKz', 'emergencyReserveBalanceKz',
+                         'openingCapitalKz', 'notes', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidFinancialPlan(incoming());
+      allow update: if isOwner(userId) &&
+                       isValidId(settingId) &&
+                       settingId == 'financial_plan' &&
+                       isValidFinancialPlan(incoming()) &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'companyName', 'monthlyRevenueGoalKz', 'monthlyExpenseBudgetKz',
+                         'annualRevenueGoalKz', 'emergencyReserveTargetKz', 'emergencyReserveBalanceKz',
+                         'openingCapitalKz', 'notes', 'updatedAt'
+                       ]);
+      allow delete: if isOwner(userId) && isValidId(settingId);
+    }
+
+    match /users/{userId}/transactions/{transactionId} {
+      allow get: if isOwner(userId) && isValidId(transactionId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(transactionId) &&
+                       incoming().keys().hasAll([
+                         'title', 'amountKz', 'type', 'category', 'transactionDateMillis',
+                         'recurring', 'settled', 'wastefulFlag', 'personalSeparated',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'title', 'amountKz', 'type', 'category', 'notes', 'transactionDateMillis',
+                         'recurring', 'settled', 'wastefulFlag', 'personalSeparated',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTransaction(incoming());
+      allow update: if isOwner(userId) &&
+                       isValidId(transactionId) &&
+                       isValidTransaction(incoming()) &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'title', 'amountKz', 'type', 'category', 'notes', 'transactionDateMillis',
+                         'recurring', 'settled', 'wastefulFlag', 'personalSeparated', 'updatedAt'
+                       ]);
+      allow delete: if isOwner(userId) && isValidId(transactionId);
+    }
+
+    match /users/{userId}/investments/{investmentId} {
+      allow get: if isOwner(userId) && isValidId(investmentId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(investmentId) &&
+                       incoming().keys().hasAll([
+                         'title', 'capitalKz', 'expectedReturnKz', 'actualReturnKz',
+                         'riskLevel', 'focusType', 'status', 'pareto8020', 'justification',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'title', 'capitalKz', 'expectedReturnKz', 'actualReturnKz',
+                         'riskLevel', 'focusType', 'status', 'pareto8020', 'justification',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidInvestment(incoming());
+      allow update: if isOwner(userId) &&
+                       isValidId(investmentId) &&
+                       isValidInvestment(incoming()) &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'title', 'capitalKz', 'expectedReturnKz', 'actualReturnKz',
+                         'riskLevel', 'focusType', 'status', 'pareto8020', 'justification', 'updatedAt'
+                       ]);
+      allow delete: if isOwner(userId) && isValidId(investmentId);
+    }
+
+    match /users/{userId}/reports/{reportId} {
+      allow get: if isOwner(userId) && isValidId(reportId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(reportId) &&
+                       incoming().keys().hasAll([
+                         'periodType', 'periodLabel', 'totalRevenueKz', 'totalExpenseKz',
+                         'netProfitKz', 'summary', 'problemsIdentified', 'opportunities',
+                         'actionPlan', 'generatedByAi', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'periodType', 'periodLabel', 'totalRevenueKz', 'totalExpenseKz',
+                         'netProfitKz', 'summary', 'problemsIdentified', 'opportunities',
+                         'actionPlan', 'generatedByAi', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidPeriodReport(incoming());
+      allow update: if false;
+      allow delete: if isOwner(userId) && isValidId(reportId);
+    }
+  }
+}
